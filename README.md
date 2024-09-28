@@ -4,7 +4,7 @@ It is still in a very early stage since this was a stupid little thing that I me
 
 ## Screenshots
 
-![Main RCE Engine running a maze](https://github.com/Schwarzemann/RCE/blob/main/doc/screenshot_1.png)
+![Main RCE Engine running a maze](https://github.com/Schwarzemann/RCE/blob/main/doc/rcegif.gif)
 ![Debug Renderer doing its job](https://github.com/Schwarzemann/RCE/blob/main/doc/screenshot_2.png)
 
 ## How to build
