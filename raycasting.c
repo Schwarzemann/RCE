@@ -8,6 +8,7 @@
 #define MAP_WIDTH  10
 #define MAP_HEIGHT 10
 #define M_PI  3.1415926535897932384626433
+#define DEG_TO_RAD(angleDegrees) ((angleDegrees) * M_PI / 180.0f)
 
 int maze[MAP_HEIGHT][MAP_WIDTH] = {
     {1,1,1,1,1,1,1,1,1,1},
@@ -58,7 +59,7 @@ void initOpenGL(GLFWwindow **window) {
         exit(EXIT_FAILURE);
     }
 
-    *window = glfwCreateWindow(screenWidth, screenHeight, "Raycasted Cube with Texture", NULL, NULL);
+    *window = glfwCreateWindow(screenWidth, screenHeight, "RCE", NULL, NULL);
     if (!*window) {
         fprintf(stderr, "Failed to create GLFW window\n");
         glfwTerminate();
@@ -128,19 +129,23 @@ void handleInput(GLFWwindow *window) {
     float moveDirX = 0.0f;
     float moveDirY = 0.0f;
 
+    // Convert player angle to radians
+    float playerAngleRad = DEG_TO_RAD(playerAngle);
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        moveDirX += cosf(playerAngle);
-        moveDirY += sinf(playerAngle);
+        moveDirX += cosf(playerAngleRad);
+        moveDirY += sinf(playerAngleRad);
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        moveDirX -= cosf(playerAngle);
-        moveDirY -= sinf(playerAngle);
+        moveDirX -= cosf(playerAngleRad);
+        moveDirY -= sinf(playerAngleRad);
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        playerAngle -= rotSpeed;
+        playerAngle -= rotSpeed * 10.0f / M_PI; // Convert to degrees for consistency
+        if (playerAngle < 0) playerAngle += 360.0f; // Keep angle between 0 and 360
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        playerAngle += rotSpeed;
+        playerAngle += rotSpeed * 10.0f / M_PI; // Convert to degrees for consistency
+        if (playerAngle >= 360.0f) playerAngle -= 360.0f; // Keep angle between 0 and 360
     }
 
     // Normalize movement direction and apply movement speed
@@ -150,6 +155,7 @@ void handleInput(GLFWwindow *window) {
         moveDirY /= magnitude;
     }
 
+    // Apply movement
     playerX += moveDirX * moveSpeed;
     playerY += moveDirY * moveSpeed;
 }
