@@ -8,12 +8,22 @@ It is still in a very early stage since this was a stupid little thing that I me
 ![Debug Renderer doing its job](https://github.com/Schwarzemann/RCE/blob/main/doc/drgid.gif)
 
 ## How to build
-It is pretty straightforward. The code is still pretty simple and doesn't require a Makefile or anything.
-However, this will change in the future. In the meantime anyone can use the commands given below.
+The makefile inside the project can be used to build all the components.
+Here's how to use them.
 
+#### Only build the raycasting engine
 ```
-gcc -v -o raycasting raycasting.c -lGL -lGLU -lglut -lglfw -lm
+make
 ```
+#### Build the debug renderer as well
+```
+make debug
+```
+#### Clean everything after
+```
+make clean
+```
+
 ```
 gcc -v -o debug_render debug_render.c -lGL -lGLU -lglut -lglfw -lm
 ```
