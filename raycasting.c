@@ -131,13 +131,15 @@ void handleInput(GLFWwindow *window) {
 
     // Convert player angle to radians
     float playerAngleRad = DEG_TO_RAD(playerAngle);
+    float cosAngle = cosf(playerAngleRad);
+    float sinAngle = sinf(playerAngleRad);
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        moveDirX += cosf(playerAngleRad);
-        moveDirY += sinf(playerAngleRad);
+        moveDirX += cosAngle;
+        moveDirY += sinAngle;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        moveDirX -= cosf(playerAngleRad);
-        moveDirY -= sinf(playerAngleRad);
+        moveDirX -= cosAngle;
+        moveDirY -= sinAngle;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
         playerAngle -= rotSpeed * 10.0f / M_PI; // Convert to degrees for consistency
@@ -151,13 +153,25 @@ void handleInput(GLFWwindow *window) {
     // Normalize movement direction and apply movement speed
     float magnitude = sqrtf(moveDirX * moveDirX + moveDirY * moveDirY);
     if (magnitude > 0.0f) {
-        moveDirX /= magnitude;
-        moveDirY /= magnitude;
+        moveDirX = (moveDirX / magnitude) * moveSpeed;
+        moveDirY = (moveDirY / magnitude) * moveSpeed;
     }
 
-    // Apply movement
-    playerX += moveDirX * moveSpeed;
-    playerY += moveDirY * moveSpeed;
+    // Calculate potential new position
+    float newPlayerX = playerX + moveDirX;
+    float newPlayerY = playerY + moveDirY;
+
+    // Collision detection
+    int mapX = (int)newPlayerX;
+    int mapY = (int)newPlayerY;
+
+    // Check if the new position is not a wall
+    if (maze[(int)playerY][mapX] == 0) {
+        playerX = newPlayerX;
+    }
+    if (maze[mapY][(int)playerX] == 0) {
+        playerY = newPlayerY;
+    }
 }
 
 // Log player position and angle
