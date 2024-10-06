@@ -23,7 +23,4 @@ make debug
 ```
 make clean
 ```
-
-```
-gcc -v -o debug_render debug_render.c -lGL -lGLU -lglut -lglfw -lm
-```
+Please note that even though the project uses Makefile in order to automate building process, the whole project can be built manually using GCC.
