@@ -1,33 +1,7 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include "graphics.h"
+#include "maze.h"
+#include "player.h"
 
-#define MAP_WIDTH  10
-#define MAP_HEIGHT 10
-#define M_PI  3.1415926535897932384626433
-#define DEG_TO_RAD(angleDegrees) ((angleDegrees) * M_PI / 180.0f)
-
-int maze[MAP_HEIGHT][MAP_WIDTH] = {
-    {1,1,1,1,1,1,1,1,1,1},
-    {1,0,0,0,0,0,0,0,0,1},
-    {1,0,1,1,1,1,1,0,0,1},
-    {1,0,1,0,0,0,1,0,0,1},
-    {1,0,1,0,1,1,1,0,0,1},
-    {1,0,1,0,1,0,0,0,0,1},
-    {1,0,1,1,1,1,1,1,0,1},
-    {1,0,0,0,0,0,0,1,0,1},
-    {1,0,1,1,1,1,0,1,0,1},
-    {1,1,1,1,1,1,1,1,1,1}
-};
-
-float playerX = 1.5f;
-float playerY = 1.5f;
-float playerAngle = 0.0f;
-float moveSpeed = 0.01f;
-float rotSpeed = 0.05f;
 int screenWidth = 800;
 int screenHeight = 600;
 GLuint textureID;
@@ -80,7 +54,6 @@ void initOpenGL(GLFWwindow **window) {
     generateBrickTexture();
 }
 
-// Draw the maze using raycasting with textured walls
 void drawMaze() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -123,78 +96,4 @@ void drawMaze() {
     }
 
     glEnd();
-}
-
-void handleInput(GLFWwindow *window) {
-    float moveDirX = 0.0f;
-    float moveDirY = 0.0f;
-
-    // Convert player angle to radians
-    float playerAngleRad = DEG_TO_RAD(playerAngle);
-    float cosAngle = cosf(playerAngleRad);
-    float sinAngle = sinf(playerAngleRad);
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        moveDirX += cosAngle;
-        moveDirY += sinAngle;
-    }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        moveDirX -= cosAngle;
-        moveDirY -= sinAngle;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        playerAngle -= rotSpeed * 10.0f / M_PI; // Convert to degrees for consistency
-        if (playerAngle < 0) playerAngle += 360.0f; // Keep angle between 0 and 360
-    }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        playerAngle += rotSpeed * 10.0f / M_PI; // Convert to degrees for consistency
-        if (playerAngle >= 360.0f) playerAngle -= 360.0f; // Keep angle between 0 and 360
-    }
-
-    // Normalize movement direction and apply movement speed
-    float magnitude = sqrtf(moveDirX * moveDirX + moveDirY * moveDirY);
-    if (magnitude > 0.0f) {
-        moveDirX = (moveDirX / magnitude) * moveSpeed;
-        moveDirY = (moveDirY / magnitude) * moveSpeed;
-    }
-
-    // Calculate potential new position
-    float newPlayerX = playerX + moveDirX;
-    float newPlayerY = playerY + moveDirY;
-
-    // Collision detection
-    int mapX = (int)newPlayerX;
-    int mapY = (int)newPlayerY;
-
-    // Check if the new position is not a wall
-    if (maze[(int)playerY][mapX] == 0) {
-        playerX = newPlayerX;
-    }
-    if (maze[mapY][(int)playerX] == 0) {
-        playerY = newPlayerY;
-    }
-}
-
-// Log player position and angle
-void logPlayerStatus() {
-    printf("Player Position: X: %.2f, Y: %.2f\nPlayer Angle: %.2f\n", playerX, playerY, playerAngle);
-}
-
-int main() {
-    GLFWwindow *window;
-    initOpenGL(&window);
-
-    while (!glfwWindowShouldClose(window)) {
-        handleInput(window);
-
-        drawMaze();
-
-        logPlayerStatus(); // Log the player’s status every frame
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
 }
