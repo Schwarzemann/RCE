@@ -1,30 +1,35 @@
 #include "graphics.h"
 #include "maze.h"
 #include "player.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 int screenWidth = 800;
 int screenHeight = 600;
 GLuint textureID;
 
+
 void generateBrickTexture() {
-    const int texSize = 64;
-    unsigned char texture[texSize][texSize][3];
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load("brick_texture.jpg", &width, &height, &nrChannels, 0);
+    if (data) {
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
 
-    for (int y = 0; y < texSize; y++) {
-        for (int x = 0; x < texSize; x++) {
-            int brick = ((x / 8) % 2 == (y / 8) % 2); // Checkerboard pattern
-            texture[y][x][0] = brick ? 139 : 205; // R
-            texture[y][x][1] = brick ? 69 : 133;  // G
-            texture[y][x][2] = brick ? 19 : 63;   // B
-        }
+        // Set texture parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // Load the texture into OpenGL
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);  // Free the image memory after loading the texture
+    } else {
+        printf("Failed to load texture\n");
     }
-
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texSize, texSize, 0, GL_RGB, GL_UNSIGNED_BYTE, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void initOpenGL(GLFWwindow **window) {
@@ -51,7 +56,7 @@ void initOpenGL(GLFWwindow **window) {
 
     // Enable texture mapping
     glEnable(GL_TEXTURE_2D);
-    generateBrickTexture();
+    generateBrickTexture();  // Load and generate the brick texture from file
 }
 
 void drawMaze() {
