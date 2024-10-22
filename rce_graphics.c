@@ -75,6 +75,9 @@ void drawMaze() {
         float rayY = sinf(rayAngle * M_PI / 180.0f);
 
         float distance = 0.0f;
+        float hitX, hitY;
+        int side; // To track whether the hit was vertical or horizontal
+
         while (distance < 16.0f) { // Check up to 16 units away
             int mapX = (int)(playerX + rayX * distance);
             int mapY = (int)(playerY + rayY * distance);
@@ -82,18 +85,39 @@ void drawMaze() {
             if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) break;
 
             if (maze[mapY][mapX] == 1) {
-                // Render wall slice with texture mapping
+                // Calculate exact hit point
+                if (fabsf(rayX) > fabsf(rayY)) {
+                    // Horizontal hit
+                    hitX = playerX + rayX * distance;
+                    hitY = playerY + rayY * distance;
+                    side = 0;  // Horizontal hit
+                } else {
+                    // Vertical hit
+                    hitX = playerX + rayX * distance;
+                    hitY = playerY + rayY * distance;
+                    side = 1;  // Vertical hit
+                }
+
+                // Calculate texture coordinate based on the side hit
+                float textureX;
+                if (side == 0) {
+                    textureX = hitY - floorf(hitY);  // Horizontal, use Y-coordinate
+                } else {
+                    textureX = hitX - floorf(hitX);  // Vertical, use X-coordinate
+                }
+
+                // Render the wall with continuous texture mapping
                 float wallHeight = screenHeight / (distance + 0.1f);
                 float wallTop = screenHeight / 2 - wallHeight / 2;
                 float wallBottom = wallTop + wallHeight;
 
-                // Texture coordinates
-                float textureX = (playerX + rayX * distance) - mapX;
+                // Texture coordinates mapped continuously across wall slices
                 glTexCoord2f(textureX, 0.0f); glVertex2f(x, wallTop);
-                glTexCoord2f(textureX + 0.1f, 0.0f); glVertex2f(x + 1, wallTop);
-                glTexCoord2f(textureX + 0.1f, 1.0f); glVertex2f(x + 1, wallBottom);
+                glTexCoord2f(textureX, 0.0f); glVertex2f(x + 1, wallTop);
+                glTexCoord2f(textureX, 1.0f); glVertex2f(x + 1, wallBottom);
                 glTexCoord2f(textureX, 1.0f); glVertex2f(x, wallBottom);
-                break;
+
+                break; // Stop at the first wall hit
             }
 
             distance += 0.1f; // Increment distance
