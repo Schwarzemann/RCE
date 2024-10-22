@@ -1,6 +1,6 @@
-#include "graphics.h"
-#include "maze.h"
-#include "player.h"
+#include "rce_graphics.h"
+#include "rce_maze.h"
+#include "rce_player.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 

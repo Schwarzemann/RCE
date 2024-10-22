@@ -1,6 +1,6 @@
-#include "input.h"
-#include "maze.h"
-#include "player.h"
+#include "rce_input.h"
+#include "rce_maze.h"
+#include "rce_player.h"
 
 void handleInput(GLFWwindow *window) {
     float moveDirX = 0.0f;

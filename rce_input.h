@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "common.h"
+#include "rce_common.h"
 
 void handleInput(GLFWwindow *window);
 

@@ -1,8 +1,8 @@
-#include "common.h"
-#include "graphics.h"
-#include "input.h"
-#include "player.h"
-#include "maze.h"
+#include "rce_common.h"
+#include "rce_graphics.h"
+#include "rce_input.h"
+#include "rce_player.h"
+#include "rce_maze.h"
 
 int main() {
     GLFWwindow *window;
