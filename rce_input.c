@@ -5,26 +5,36 @@
 void handleInput(GLFWwindow *window) {
     float moveDirX = 0.0f;
     float moveDirY = 0.0f;
+    float playerVerticalAngle = 0.0f;
 
     float playerAngleRad = DEG_TO_RAD(playerAngle);
     float cosAngle = cosf(playerAngleRad);
     float sinAngle = sinf(playerAngleRad);
 
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         moveDirX += cosAngle;
         moveDirY += sinAngle;
     }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         moveDirX -= cosAngle;
         moveDirY -= sinAngle;
     }
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         playerAngle -= rotSpeed * 10.0f / M_PI;
         if (playerAngle < 0) playerAngle += 360.0f;
     }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         playerAngle += rotSpeed * 10.0f / M_PI;
         if (playerAngle >= 360.0f) playerAngle -= 360.0f;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        playerVerticalAngle += rotSpeed;
+        if (playerVerticalAngle > 90.0f) playerVerticalAngle = 90.0f; // Limit to 90 degrees
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        playerVerticalAngle -= rotSpeed;
+        if (playerVerticalAngle < -90.0f) playerVerticalAngle = -90.0f; // Limit to -90 degrees
     }
 
     // Normalize movement direction

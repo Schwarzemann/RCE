@@ -18,6 +18,7 @@ extern int maze[MAP_HEIGHT][MAP_WIDTH];
 extern float playerX;
 extern float playerY;
 extern float playerAngle;
+extern float playerVerticalAngle;
 extern float moveSpeed;
 extern float rotSpeed;
 extern int screenWidth;

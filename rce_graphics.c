@@ -65,6 +65,7 @@ void drawMaze() {
     int fov = 60; // Field of view
     float angleStep = fov / (float)screenWidth;
     float angleOffset = (fov / 2.0f) - angleStep;
+    float playerVerticalAngle = 0.0f;
 
     glBindTexture(GL_TEXTURE_2D, textureID);
     glBegin(GL_QUADS);
@@ -106,9 +107,9 @@ void drawMaze() {
                     textureX = hitX - floorf(hitX);  // Vertical, use X-coordinate
                 }
 
-                // Render the wall with continuous texture mapping
+                // Calculate wall height and apply playerVerticalAngle adjustment
                 float wallHeight = screenHeight / (distance + 0.1f);
-                float wallTop = screenHeight / 2 - wallHeight / 2;
+                float wallTop = (screenHeight / 2 - wallHeight / 2) + playerVerticalAngle * 5.0f;
                 float wallBottom = wallTop + wallHeight;
 
                 // Texture coordinates mapped continuously across wall slices
