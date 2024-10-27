@@ -4,10 +4,10 @@ CFLAGS = -Wall -g
 LIBS = -lGL -lGLU -lglut -lglfw -lGLEW -lm
 
 # Object files for RCE
-RCE_OBJECTS = main.o rce_maze.o rce_player.o rce_graphics.o rce_input.o
+RCE_OBJECTS = main.o rce_maze.o rce_player.o rce_graphics.o rce_input.o rce_creature.o
 
 # Object files for debug_render (renamed with rce_ prefix)
-DEBUG_OBJECTS = rce_debug_main.o rce_debug_graphics.o rce_debug_input.o
+DEBUG_OBJECTS = debug_graphics.o
 
 # Default target
 all: RCE
@@ -39,15 +39,12 @@ rce_graphics.o: rce_graphics.c rce_graphics.h rce_common.h rce_maze.h rce_player
 rce_input.o: rce_input.c rce_input.h rce_common.h rce_maze.h rce_player.h
 	$(CC) $(CFLAGS) -c rce_input.c
 
+rce_creature.o: rce_creature.c rce_creature.h rce_maze.h
+	$(CC) $(CFLAGS) -c rce_creature.c
+
 # debug_render object files compilation (with rce_ prefix)
-rce_debug_main.o: rce_debug_main.c rce_debug_globals.h rce_debug_graphics.h rce_debug_input.h
-	$(CC) $(CFLAGS) -c rce_debug_main.c -o rce_debug_main.o
-
-rce_debug_graphics.o: rce_debug_graphics.c rce_debug_graphics.h rce_debug_globals.h
-	$(CC) $(CFLAGS) -c rce_debug_graphics.c -o rce_debug_graphics.o
-
-rce_debug_input.o: rce_debug_input.c rce_debug_input.h rce_debug_globals.h
-	$(CC) $(CFLAGS) -c rce_debug_input.c -o rce_debug_input.o
+debug_graphics.o: debug_graphics.c
+	$(CC) $(CFLAGS) -c debug_graphics.c -o debug_graphics.o
 
 # Clean up
 clean:
