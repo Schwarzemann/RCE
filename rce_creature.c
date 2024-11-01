@@ -1,17 +1,19 @@
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <math.h>
 #include "rce_creature.h"
 #include "rce_maze.h"
+#include "rce_player.h"
 
-#define TILE_SIZE 1.0f // Define TILE_SIZE if not defined elsewhere
+#define TILE_SIZE 2.0f // Temporarily increased to make the creature more visible
 
-float creatureX = 5.5f;
-float creatureY = 5.5f;
+float creatureX;
+float creatureY;
 float creatureSpeed = 0.005f;
 
 void initCreature() {
-    creatureX = 5.5f;
-    creatureY = 5.5f;
+    creatureX = playerX + 1.0f;  // Start near the player
+    creatureY = playerY + 1.0f;
 }
 
 int isWalkable(int x, int y) {
@@ -52,8 +54,8 @@ void updateCreaturePosition(float playerX, float playerY) {
 
 void drawCreature() {
     glPushMatrix();
-    glTranslatef(creatureX * TILE_SIZE, creatureY * TILE_SIZE, 0); // Adjust TILE_SIZE as needed
-    glColor3f(1.0f, 0.0f, 0.0f); // Red color for the creature
+    glTranslatef(creatureX * TILE_SIZE, creatureY * TILE_SIZE, 0); // Adjusted to make the creature appear in the maze
+    glColor3f(1.0f, 0.0f, 0.0f); // Set to bright red for visibility
     glBegin(GL_QUADS);
         glVertex2f(-0.25f, -0.25f);
         glVertex2f( 0.25f, -0.25f);
