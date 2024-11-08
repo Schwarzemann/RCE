@@ -4,7 +4,7 @@
 #include "rce_common.h"
 
 void initOpenGL(GLFWwindow **window);
-void generateBrickTexture();
+GLuint loadTexture(const char *filename);
 void drawMaze();
 
 #endif

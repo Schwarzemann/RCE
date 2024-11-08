@@ -6,30 +6,58 @@
 
 int screenWidth = 800;
 int screenHeight = 600;
-GLuint textureID;
+GLuint textureID;  // Global texture ID
 
-
-void generateBrickTexture() {
+GLuint loadTexture(const char *filename) {
+    GLuint textureID;
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("brick_texture.jpg", &width, &height, &nrChannels, 0);
+
+    // Load the image using stb_image
+    stbi_set_flip_vertically_on_load(1);  // Flip the image vertically for OpenGL compatibility
+    unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+
     if (data) {
+        // Generate texture ID
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
 
-        // Set texture parameters
+        // Set texture wrapping and filtering options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        // Load the texture into OpenGL
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // Load the texture data into OpenGL
+        if (nrChannels == 3) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        } else if (nrChannels == 4) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        } else {
+            printf("Warning: Texture format not supported. The texture will not be loaded.\n");
+            stbi_image_free(data);
+            return 0;  // Return 0 to indicate an error
+        }
 
-        stbi_image_free(data);  // Free the image memory after loading the texture
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
     } else {
-        printf("Failed to load texture\n");
+        // If the texture fails to load, print an error message
+        printf("Error: Failed to load texture from %s\n", filename);
+        return 0;  // Return 0 to indicate an error
     }
+
+    return textureID;
+}
+
+// Function to load a fallback texture in case of an error
+GLuint loadFallbackTexture() {
+    unsigned char data[4] = {255, 0, 0, 255};  // Red color as fallback
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    return textureID;
 }
 
 void initOpenGL(GLFWwindow **window) {
@@ -62,7 +90,15 @@ void initOpenGL(GLFWwindow **window) {
     glLoadIdentity();
 
     glEnable(GL_TEXTURE_2D);
-    generateBrickTexture();
+
+    // Correctly load the texture with the filename
+    textureID = loadTexture("brick_texture.jpg");
+
+    // If texture loading fails, load fallback texture
+    if (textureID == 0) {
+        printf("Failed to load the texture. Using fallback texture.\n");
+        textureID = loadFallbackTexture();
+    }
 }
 
 void drawMaze() {
