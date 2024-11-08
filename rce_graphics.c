@@ -46,7 +46,14 @@ void initOpenGL(GLFWwindow **window) {
     }
 
     glfwMakeContextCurrent(*window);
-    glewInit();
+    
+    GLenum glewStatus = glewInit();
+    if (glewStatus != GLEW_OK) {
+        fprintf(stderr, "GLEW Error: %s\n", glewGetErrorString(glewStatus));
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+
     glViewport(0, 0, screenWidth, screenHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -54,9 +61,8 @@ void initOpenGL(GLFWwindow **window) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // Enable texture mapping
     glEnable(GL_TEXTURE_2D);
-    generateBrickTexture();  // Load and generate the brick texture from file
+    generateBrickTexture();
 }
 
 void drawMaze() {
