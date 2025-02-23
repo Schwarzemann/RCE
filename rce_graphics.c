@@ -86,16 +86,15 @@ void initOpenGL(GLFWwindow **window) {
     glViewport(0, 0, screenWidth, screenHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, screenWidth, screenHeight, 0, -1, 1);
+    glOrtho(0, screenWidth, screenHeight, 0, -10, 10); // Adjusted for 3D depth
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST); // Enable depth for 3D
+    glDepthFunc(GL_LESS);
 
-    // Correctly load the texture with the filename
     textureID = loadTexture("brick_texture.jpg");
-
-    // If texture loading fails, load fallback texture
     if (textureID == 0) {
         printf("Failed to load the texture. Using fallback texture.\n");
         textureID = loadFallbackTexture();
@@ -103,7 +102,7 @@ void initOpenGL(GLFWwindow **window) {
 }
 
 void drawMaze() {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear depth too
 
     int fov = 60;
     float angleStep = fov / (float)screenWidth;
@@ -113,7 +112,6 @@ void drawMaze() {
     glBindTexture(GL_TEXTURE_2D, textureID);
     glBegin(GL_QUADS);
 
-    // Wall raycasting (existing code)
     for (int x = 0; x < screenWidth; x++) {
         float rayAngle = playerAngle - angleOffset + angleStep * x;
         float rayX = cosf(rayAngle * M_PI / 180.0f);
@@ -153,32 +151,6 @@ void drawMaze() {
                 break;
             }
             distance += 0.1f;
-        }
-    }
-    glEnd();
-
-    // Draw creature as a sprite
-    glBegin(GL_QUADS);
-    glColor3f(1.0f, 0.0f, 0.0f); // Red color for creature
-    float dx = creatureX - playerX;
-    float dy = creatureY - playerY;
-    float distToCreature = sqrtf(dx * dx + dy * dy);
-    if (distToCreature < 16.0f) { // Only draw if within range
-        float creatureAngle = atan2f(dy, dx) * 180.0f / M_PI;
-        float relativeAngle = creatureAngle - playerAngle;
-        if (relativeAngle < -180.0f) relativeAngle += 360.0f;
-        if (relativeAngle > 180.0f) relativeAngle -= 360.0f;
-
-        if (fabsf(relativeAngle) < fov / 2.0f) { // Check if in FOV
-            float screenX = screenWidth / 2.0f + (relativeAngle / angleStep);
-            float creatureHeight = screenHeight / (distToCreature + 0.1f);
-            float creatureTop = screenHeight / 2.0f - creatureHeight / 2.0f;
-            float creatureBottom = creatureTop + creatureHeight;
-
-            glVertex2f(screenX - creatureHeight / 2, creatureTop);
-            glVertex2f(screenX + creatureHeight / 2, creatureTop);
-            glVertex2f(screenX + creatureHeight / 2, creatureBottom);
-            glVertex2f(screenX - creatureHeight / 2, creatureBottom);
         }
     }
     glEnd();
