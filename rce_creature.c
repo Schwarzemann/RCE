@@ -12,8 +12,15 @@ float creatureY;
 float creatureSpeed = 0.005f;
 
 void initCreature() {
-    creatureX = playerX + 1.0f;  // Start near the player
-    creatureY = playerY + 1.0f;
+    creatureX = 3.5f;  // Start at a fixed walkable spot farther from player
+    creatureY = 3.5f;
+    while (!isWalkable((int)creatureX, (int)creatureY)) {
+        creatureX += 1.0f;  // Move right until walkable
+        if (creatureX >= MAP_WIDTH - 1) {
+            creatureX = 1.5f;
+            creatureY += 1.0f;  // Move down if we hit the edge
+        }
+    }
 }
 
 int isWalkable(int x, int y) {
@@ -30,7 +37,6 @@ void updateCreaturePosition(float playerX, float playerY) {
     int bestX = creatureMapX;
     int bestY = creatureMapY;
 
-    // Check four neighboring cells
     int neighbors[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
     for (int i = 0; i < 4; i++) {
         int nx = creatureMapX + neighbors[i][0];
@@ -45,11 +51,12 @@ void updateCreaturePosition(float playerX, float playerY) {
         }
     }
 
-    // Move creature towards the best cell found
     if (bestX != creatureMapX || bestY != creatureMapY) {
         creatureX += (bestX - creatureMapX) * creatureSpeed;
         creatureY += (bestY - creatureMapY) * creatureSpeed;
     }
+
+    printf("Creature Position: X: %.2f, Y: %.2f\n", creatureX, creatureY); // Debug print
 }
 
 void drawCreature() {

@@ -19,7 +19,7 @@ void processPlayerMovement(float moveDirX, float moveDirY) {
 
 void processPlayerRotation(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        playerAngle -= rotSpeed * 5.0f;;
+        playerAngle -= rotSpeed * 5.0f;
         if (playerAngle < 0) playerAngle += 360.0f;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
@@ -42,6 +42,14 @@ void handleInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         moveDirX -= cosAngle;
         moveDirY -= sinAngle;
+    }
+
+    // Regenerate maze when 'R' is pressed
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        generateMaze();
+        // Reset player position to starting point
+        playerX = 1.5f;
+        playerY = 1.5f;
     }
 
     processPlayerMovement(moveDirX, moveDirY);

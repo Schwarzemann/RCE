@@ -1,6 +1,7 @@
 #include "rce_graphics.h"
 #include "rce_maze.h"
 #include "rce_player.h"
+#include "rce_creature.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -104,7 +105,7 @@ void initOpenGL(GLFWwindow **window) {
 void drawMaze() {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    int fov = 60; // Field of view
+    int fov = 60;
     float angleStep = fov / (float)screenWidth;
     float angleOffset = (fov / 2.0f) - angleStep;
     float playerVerticalAngle = 0.0f;
@@ -112,6 +113,7 @@ void drawMaze() {
     glBindTexture(GL_TEXTURE_2D, textureID);
     glBegin(GL_QUADS);
 
+    // Wall raycasting (existing code)
     for (int x = 0; x < screenWidth; x++) {
         float rayAngle = playerAngle - angleOffset + angleStep * x;
         float rayX = cosf(rayAngle * M_PI / 180.0f);
@@ -119,53 +121,65 @@ void drawMaze() {
 
         float distance = 0.0f;
         float hitX, hitY;
-        int side; // To track whether the hit was vertical or horizontal
+        int side;
 
-        while (distance < 16.0f) { // Check up to 16 units away
+        while (distance < 16.0f) {
             int mapX = (int)(playerX + rayX * distance);
             int mapY = (int)(playerY + rayY * distance);
 
             if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) break;
 
             if (maze[mapY][mapX] == 1) {
-                // Calculate exact hit point
                 if (fabsf(rayX) > fabsf(rayY)) {
-                    // Horizontal hit
                     hitX = playerX + rayX * distance;
                     hitY = playerY + rayY * distance;
-                    side = 0;  // Horizontal hit
+                    side = 0;
                 } else {
-                    // Vertical hit
                     hitX = playerX + rayX * distance;
                     hitY = playerY + rayY * distance;
-                    side = 1;  // Vertical hit
+                    side = 1;
                 }
 
-                // Calculate texture coordinate based on the side hit
-                float textureX;
-                if (side == 0) {
-                    textureX = hitY - floorf(hitY);  // Horizontal, use Y-coordinate
-                } else {
-                    textureX = hitX - floorf(hitX);  // Vertical, use X-coordinate
-                }
-
-                // Calculate wall height and apply playerVerticalAngle adjustment
+                float textureX = (side == 0) ? (hitY - floorf(hitY)) : (hitX - floorf(hitX));
                 float wallHeight = screenHeight / (distance + 0.1f);
                 float wallTop = (screenHeight / 2 - wallHeight / 2) + playerVerticalAngle * 5.0f;
                 float wallBottom = wallTop + wallHeight;
 
-                // Texture coordinates mapped continuously across wall slices
                 glTexCoord2f(textureX, 0.0f); glVertex2f(x, wallTop);
                 glTexCoord2f(textureX, 0.0f); glVertex2f(x + 1, wallTop);
                 glTexCoord2f(textureX, 1.0f); glVertex2f(x + 1, wallBottom);
                 glTexCoord2f(textureX, 1.0f); glVertex2f(x, wallBottom);
 
-                break; // Stop at the first wall hit
+                break;
             }
-
-            distance += 0.1f; // Increment distance
+            distance += 0.1f;
         }
     }
+    glEnd();
 
+    // Draw creature as a sprite
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 0.0f, 0.0f); // Red color for creature
+    float dx = creatureX - playerX;
+    float dy = creatureY - playerY;
+    float distToCreature = sqrtf(dx * dx + dy * dy);
+    if (distToCreature < 16.0f) { // Only draw if within range
+        float creatureAngle = atan2f(dy, dx) * 180.0f / M_PI;
+        float relativeAngle = creatureAngle - playerAngle;
+        if (relativeAngle < -180.0f) relativeAngle += 360.0f;
+        if (relativeAngle > 180.0f) relativeAngle -= 360.0f;
+
+        if (fabsf(relativeAngle) < fov / 2.0f) { // Check if in FOV
+            float screenX = screenWidth / 2.0f + (relativeAngle / angleStep);
+            float creatureHeight = screenHeight / (distToCreature + 0.1f);
+            float creatureTop = screenHeight / 2.0f - creatureHeight / 2.0f;
+            float creatureBottom = creatureTop + creatureHeight;
+
+            glVertex2f(screenX - creatureHeight / 2, creatureTop);
+            glVertex2f(screenX + creatureHeight / 2, creatureTop);
+            glVertex2f(screenX + creatureHeight / 2, creatureBottom);
+            glVertex2f(screenX - creatureHeight / 2, creatureBottom);
+        }
+    }
     glEnd();
 }

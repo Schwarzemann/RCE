@@ -15,8 +15,8 @@ int main() {
         handleInput(window);           // Check for inputs, including regenerating maze with 'R'
         updateCreaturePosition(playerX, playerY); // Update creature position to follow the player
 
-        drawMaze();                    // Render the maze
         drawCreature();                // Render the creature
+        drawMaze();                    // Render the maze
 
         logPlayerStatus();             // Log the player’s status every frame
 
