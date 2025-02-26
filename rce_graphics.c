@@ -95,13 +95,13 @@ void initOpenGL(GLFWwindow **window) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Standard alpha blending
 
-    textureID = loadTexture("brick_texture.jpg");
+    textureID = loadTexture("sprites/brick_texture.jpg");
     if (textureID == 0) {
         printf("Failed to load the texture. Using fallback texture.\n");
         textureID = loadFallbackTexture();
     }
 
-    creatureTextureID = loadTexture("lost_soul.png");
+    creatureTextureID = loadTexture("sprites/lost_soul.png");
     if (creatureTextureID == 0) {
         printf("Failed to load the creature texture. Using fallback texture.\n");
         creatureTextureID = loadFallbackTexture();
