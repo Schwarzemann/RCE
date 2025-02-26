@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <math.h>
+#include <stdio.h>
 #include "rce_creature.h"
 #include "rce_maze.h"
 #include "rce_player.h"
@@ -10,7 +11,7 @@
 
 float creatureX;
 float creatureY;
-float creatureSpeed = 0.01f;
+float creatureSpeed = 0.0009f;
 float rotationAngle = 0.0f; // Moved to global scope
 
 void initCreature() {
@@ -29,38 +30,82 @@ int isWalkable(int x, int y) {
     return (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT && maze[y][x] == 0);
 }
 
+int hasLineOfSight(float startX, float startY, float endX, float endY) {
+    float dx = endX - startX;
+    float dy = endY - startY;
+    float distance = sqrtf(dx * dx + dy * dy);
+    float stepX = dx / distance;
+    float stepY = dy / distance;
+
+    float currentX = startX;
+    float currentY = startY;
+    float traveled = 0.0f;
+
+    while (traveled < distance) {
+        int mapX = (int)currentX;
+        int mapY = (int)currentY;
+        if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT || maze[mapY][mapX] == 1) {
+            return 0; // Hit a wall
+        }
+        currentX += stepX * 0.1f;
+        currentY += stepY * 0.1f;
+        traveled += 0.1f;
+    }
+    return 1; // Clear path
+}
+
 void updateCreaturePosition(float playerX, float playerY) {
-    int creatureMapX = (int)creatureX;
-    int creatureMapY = (int)creatureY;
-    int playerMapX = (int)playerX;
-    int playerMapY = (int)playerY;
+    // Calculate direction to player
+    float dx = playerX - creatureX;
+    float dy = playerY - creatureY;
+    float distance = sqrtf(dx * dx + dy * dy);
 
-    float minDist = INFINITY;
-    int bestX = creatureMapX;
-    int bestY = creatureMapY;
+    if (distance > 0.1f) { // Only move if not too close
+        // Normalize direction
+        float dirX = dx / distance;
+        float dirY = dy / distance;
 
-    int neighbors[4][2] = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} };
-    for (int i = 0; i < 4; i++) {
-        int nx = creatureMapX + neighbors[i][0];
-        int ny = creatureMapY + neighbors[i][1];
-        if (isWalkable(nx, ny)) {
-            float dist = sqrtf((nx - playerMapX) * (nx - playerMapX) + (ny - playerMapY) * (ny - playerMapY));
-            if (dist < minDist) {
-                minDist = dist;
-                bestX = nx;
-                bestY = ny;
+        // Calculate next position
+        float nextX = creatureX + dirX * creatureSpeed;
+        float nextY = creatureY + dirY * creatureSpeed;
+
+        // Collision check: Only move if next position is walkable
+        int nextMapX = (int)nextX;
+        int nextMapY = (int)nextY;
+        if (isWalkable(nextMapX, nextMapY)) {
+            creatureX = nextX;
+            creatureY = nextY;
+        } else {
+            // Try sliding along X or Y if direct path is blocked
+            nextX = creatureX + dirX * creatureSpeed;
+            nextY = creatureY; // Only X movement
+            nextMapX = (int)nextX;
+            nextMapY = (int)nextY;
+            if (isWalkable(nextMapX, nextMapY)) {
+                creatureX = nextX;
+            } else {
+                nextX = creatureX;
+                nextY = creatureY + dirY * creatureSpeed; // Only Y movement
+                nextMapX = (int)nextX;
+                nextMapY = (int)nextY;
+                if (isWalkable(nextMapX, nextMapY)) {
+                    creatureY = nextY;
+                }
             }
         }
     }
 
-    if (bestX != creatureMapX || bestY != creatureMapY) {
-        creatureX += (bestX - creatureMapX) * creatureSpeed;
-        creatureY += (bestY - creatureMapY) * creatureSpeed;
-    }
-
-    // Update rotation angle for spinning
-    rotationAngle += 0.1f; // Adjust speed of spin (degrees per frame)
+    rotationAngle += 0.5f;
     if (rotationAngle >= 360.0f) rotationAngle -= 360.0f;
+}
+
+void logCreatureStatus(float playerX, float playerY) {
+    float dx = playerX - creatureX;
+    float dy = playerY - creatureY;
+    float distance = sqrtf(dx * dx + dy * dy);
+    int visible = hasLineOfSight(playerX, playerY, creatureX, creatureY);
+    printf("Creature Position: X: %.2f, Y: %.2f | Distance to Player: %.2f | Visible: %s\n",
+           creatureX, creatureY, distance, visible ? "Yes" : "No");
 }
 
 void drawCreature() {
@@ -77,59 +122,29 @@ void drawCreature() {
         if (relativeAngle > 180.0f) relativeAngle -= 360.0f;
 
         if (fabsf(relativeAngle) < fov / 2.0f) {
-            float screenX = screenWidth / 2.0f + (relativeAngle / angleStep);
-            float creatureHeight = screenHeight / (distToCreature + 0.1f);
+            if (hasLineOfSight(playerX, playerY, creatureX, creatureY)) {
+                float screenX = screenWidth / 2.0f + (relativeAngle / angleStep);
+                float creatureHeight = screenHeight / (distToCreature + 0.1f);
+                float halfHeight = creatureHeight / 2.0f;
 
-            glDisable(GL_TEXTURE_2D);
-            glDisable(GL_LIGHTING);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, creatureTextureID);
+                glPushMatrix();
+                glLoadIdentity();
+                glTranslatef(screenX, screenHeight / 2.0f, 0.0f);
+                glRotatef(rotationAngle, 0.0f, 0.0f, 1.0f);
+                glScalef(halfHeight, halfHeight, 1.0f);
 
-            glPushMatrix();
-            glLoadIdentity();
-            glTranslatef(screenX, screenHeight / 2.0f, -distToCreature); // Use distance for depth
-            glScalef(creatureHeight / 2.0f, creatureHeight / 2.0f, creatureHeight / 2.0f);
-            glRotatef(rotationAngle, 1.0f, 1.0f, 1.0f);
+                glColor3f(1.0f, 1.0f, 1.0f); // White to preserve texture colors
+                glBegin(GL_QUADS);
+                glTexCoord2f(0.0f, 0.0f); glVertex2f(-1.0f, -1.0f); // Bottom-left
+                glTexCoord2f(1.0f, 0.0f); glVertex2f( 1.0f, -1.0f); // Bottom-right
+                glTexCoord2f(1.0f, 1.0f); glVertex2f( 1.0f,  1.0f); // Top-right
+                glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f,  1.0f); // Top-left
+                glEnd();
 
-            glBegin(GL_QUADS);
-            // Front face
-            glColor3f(1.0f, 0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
-            glColor3f(0.0f, 1.0f, 0.0f); glVertex3f( 0.5f, -0.5f, 0.5f);
-            glColor3f(0.0f, 0.0f, 1.0f); glVertex3f( 0.5f,  0.5f, 0.5f);
-            glColor3f(1.0f, 1.0f, 0.0f); glVertex3f(-0.5f,  0.5f, 0.5f);
-
-            // Back face
-            glColor3f(1.0f, 0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
-            glColor3f(0.0f, 1.0f, 1.0f); glVertex3f( 0.5f, -0.5f, -0.5f);
-            glColor3f(1.0f, 1.0f, 1.0f); glVertex3f( 0.5f,  0.5f, -0.5f);
-            glColor3f(0.5f, 0.0f, 0.5f); glVertex3f(-0.5f,  0.5f, -0.5f);
-
-            // Left face
-            glColor3f(1.0f, 0.0f, 0.0f); glVertex3f(-0.5f, -0.5f,  0.5f);
-            glColor3f(1.0f, 0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
-            glColor3f(0.5f, 0.0f, 0.5f); glVertex3f(-0.5f,  0.5f, -0.5f);
-            glColor3f(1.0f, 1.0f, 0.0f); glVertex3f(-0.5f,  0.5f,  0.5f);
-
-            // Right face
-            glColor3f(0.0f, 1.0f, 0.0f); glVertex3f(0.5f, -0.5f,  0.5f);
-            glColor3f(0.0f, 1.0f, 1.0f); glVertex3f(0.5f, -0.5f, -0.5f);
-            glColor3f(1.0f, 1.0f, 1.0f); glVertex3f(0.5f,  0.5f, -0.5f);
-            glColor3f(0.0f, 0.0f, 1.0f); glVertex3f(0.5f,  0.5f,  0.5f);
-
-            // Top face
-            glColor3f(1.0f, 1.0f, 0.0f); glVertex3f(-0.5f, 0.5f,  0.5f);
-            glColor3f(0.0f, 0.0f, 1.0f); glVertex3f( 0.5f, 0.5f,  0.5f);
-            glColor3f(1.0f, 1.0f, 1.0f); glVertex3f( 0.5f, 0.5f, -0.5f);
-            glColor3f(0.5f, 0.0f, 0.5f); glVertex3f(-0.5f, 0.5f, -0.5f);
-
-            // Bottom face
-            glColor3f(1.0f, 0.0f, 0.0f); glVertex3f(-0.5f, -0.5f,  0.5f);
-            glColor3f(0.0f, 1.0f, 0.0f); glVertex3f( 0.5f, -0.5f,  0.5f);
-            glColor3f(0.0f, 1.0f, 1.0f); glVertex3f( 0.5f, -0.5f, -0.5f);
-            glColor3f(1.0f, 0.0f, 1.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
-            glEnd();
-
-            glPopMatrix();
-            glEnable(GL_TEXTURE_2D);
+                glPopMatrix();
+            }
         }
     }
 }

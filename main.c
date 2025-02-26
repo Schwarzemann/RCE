@@ -6,25 +6,56 @@
 #include "rce_creature.h"
 
 int main() {
-    GLFWwindow *window;
-    initOpenGL(&window);
-    generateMaze();  // Generate maze only once when the program starts
-    initCreature();  // Initialize the creature's starting position
+    GLFWwindow *mainWindow;
+    GLFWwindow *topDownWindow;
 
-    while (!glfwWindowShouldClose(window)) {
-        handleInput(window);           // Check for inputs, including regenerating maze with 'R'
-        updateCreaturePosition(playerX, playerY); // Update creature position to follow the player
+    // Initialize GLFW
+    if (!glfwInit()) {
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        return -1;
+    }
 
+    // Create main 3D window
+    initOpenGL(&mainWindow);
+
+    // Create top-down 2D window
+    topDownWindow = glfwCreateWindow(MAP_WIDTH * 20, MAP_HEIGHT * 20, "RCE Top-down view", NULL, mainWindow);
+    if (!topDownWindow) {
+        fprintf(stderr, "Failed to create top-down window\n");
+        glfwDestroyWindow(mainWindow);
+        glfwTerminate();
+        return -1;
+    }
+
+    // Set up initial state
+    generateMaze();
+    initCreature();
+
+    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(topDownWindow)) {
+        // Update logic
+        handleInput(mainWindow);
+        updateCreaturePosition(playerX, playerY);
+
+        // Draw main 3D view
+        glfwMakeContextCurrent(mainWindow);
         drawMaze();
         drawCreature();
 
-        logPlayerStatus();             // Log the player’s status every frame
+        // Draw top-down 2D view
+        drawTopDownView(topDownWindow);
 
-        glfwSwapBuffers(window);
+        // Log status
+        logPlayerStatus();
+        logCreatureStatus(playerX, playerY);
+
+        // Swap buffers for main window
+        glfwSwapBuffers(mainWindow);
         glfwPollEvents();
     }
 
-    glfwDestroyWindow(window);
+    // Clean up
+    glfwDestroyWindow(topDownWindow);
+    glfwDestroyWindow(mainWindow);
     glfwTerminate();
     return 0;
 }

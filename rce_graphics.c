@@ -8,6 +8,7 @@
 int screenWidth = 800;
 int screenHeight = 600;
 GLuint textureID;  // Global texture ID
+GLuint creatureTextureID;
 
 GLuint loadTexture(const char *filename) {
     GLuint textureID;
@@ -86,23 +87,29 @@ void initOpenGL(GLFWwindow **window) {
     glViewport(0, 0, screenWidth, screenHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, screenWidth, screenHeight, 0, -10, 10); // Adjusted for 3D depth
+    glOrtho(0, screenWidth, screenHeight, 0, -1, 1); // Original 2D setup
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     glEnable(GL_TEXTURE_2D);
-    glEnable(GL_DEPTH_TEST); // Enable depth for 3D
-    glDepthFunc(GL_LESS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Standard alpha blending
 
     textureID = loadTexture("brick_texture.jpg");
     if (textureID == 0) {
         printf("Failed to load the texture. Using fallback texture.\n");
         textureID = loadFallbackTexture();
     }
+
+    creatureTextureID = loadTexture("lost_soul.png");
+    if (creatureTextureID == 0) {
+        printf("Failed to load the creature texture. Using fallback texture.\n");
+        creatureTextureID = loadFallbackTexture();
+    }
 }
 
 void drawMaze() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear depth too
+    glClear(GL_COLOR_BUFFER_BIT);
 
     int fov = 60;
     float angleStep = fov / (float)screenWidth;
@@ -154,4 +161,70 @@ void drawMaze() {
         }
     }
     glEnd();
+}
+
+void drawTopDownView(GLFWwindow *topDownWindow) {
+    glfwMakeContextCurrent(topDownWindow);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Set up orthographic projection for 2D view (match maze dimensions)
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, MAP_WIDTH, MAP_HEIGHT, 0, -1, 1); // Top-down: (0,0) at top-left
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    // Disable textures for simple colored drawing
+    glDisable(GL_TEXTURE_2D);
+
+    // Draw maze (walls as white, floors as black)
+    glBegin(GL_QUADS);
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            if (maze[y][x] == 1) {
+                glColor3f(1.0f, 1.0f, 1.0f); // White walls
+            } else {
+                glColor3f(0.0f, 0.0f, 0.0f); // Black floors
+            }
+            glVertex2f(x, y);
+            glVertex2f(x + 1, y);
+            glVertex2f(x + 1, y + 1);
+            glVertex2f(x, y + 1);
+        }
+    }
+    glEnd();
+
+    // Draw player as a green circle
+    glColor3f(0.0f, 1.0f, 0.0f); // Green
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(playerX, playerY); // Center
+    for (int i = 0; i <= 20; i++) {
+        float angle = 2.0f * M_PI * i / 20.0f;
+        glVertex2f(playerX + 0.2f * cosf(angle), playerY + 0.2f * sinf(angle)); // Radius 0.2
+    }
+    glEnd();
+
+    // Draw player camera direction as a line
+    glColor3f(0.0f, 0.0f, 1.0f); // Blue
+    glBegin(GL_LINES);
+    glVertex2f(playerX, playerY);
+    float dirX = cosf(playerAngle * M_PI / 180.0f);
+    float dirY = sinf(playerAngle * M_PI / 180.0f);
+    glVertex2f(playerX + dirX * 0.5f, playerY + dirY * 0.5f); // Extend 0.5 units
+    glEnd();
+
+    // Draw creature as a red circle
+    glColor3f(1.0f, 0.0f, 0.0f); // Red
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(creatureX, creatureY); // Center
+    for (int i = 0; i <= 20; i++) {
+        float angle = 2.0f * M_PI * i / 20.0f;
+        glVertex2f(creatureX + 0.2f * cosf(angle), creatureY + 0.2f * sinf(angle)); // Radius 0.2
+    }
+    glEnd();
+
+    // Re-enable textures for main window
+    glEnable(GL_TEXTURE_2D);
+
+    glfwSwapBuffers(topDownWindow);
 }
