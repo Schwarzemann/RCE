@@ -34,9 +34,11 @@ const char* spriteFiles[] = {
     "sprites/Lost_Soul_Side.png",
     "sprites/Lost_Soul_Side2.png",
     "sprites/Lost_Soul_Back.png",
-    "sprites/Lost_Soul_Back2.png"
+    "sprites/Lost_Soul_Back2.png",
+    "sprites/Lost_Soul_Side4.png",
+    "sprites/Lost_Soul_Side3.png"
 };
-#define NUM_SPRITES 5
+#define NUM_SPRITES 7
 GLuint spriteTextures[NUM_SPRITES];
 float animationTime = 0.0f; // Time for animation
 float animationSpeed = 400.0f; // Frames per second for animation (adjust for speed)
