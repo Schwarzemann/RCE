@@ -9,6 +9,8 @@ int screenWidth = 800;
 int screenHeight = 600;
 GLuint textureID;  // Global texture ID
 GLuint creatureTextureID;
+GLuint groundTextureID;
+GLuint skyTextureID;
 
 GLuint loadTexture(const char *filename) {
     GLuint textureID;
@@ -106,6 +108,18 @@ void initOpenGL(GLFWwindow **window) {
         printf("Failed to load the creature texture. Using fallback texture.\n");
         creatureTextureID = loadFallbackTexture();
     }
+
+    groundTextureID = loadTexture("sprites/ground_sprite.png");
+    if (groundTextureID == 0) {
+        printf("Failed to load the ground texture. Using fallback texture.\n");
+        groundTextureID = loadFallbackTexture();
+    }
+
+    skyTextureID = loadTexture("sprites/SKY9.png");
+    if (skyTextureID == 0) {
+        printf("Failed to load the sky texture. Using fallback texture.\n");
+        skyTextureID = loadFallbackTexture();
+    }
 }
 
 void drawMaze() {
@@ -115,7 +129,60 @@ void drawMaze() {
     float angleStep = fov / (float)screenWidth;
     float angleOffset = (fov / 2.0f) - angleStep;
     float playerVerticalAngle = 0.0f;
+    float horizon = screenHeight / 2.0f + playerVerticalAngle * 5.0f;
 
+    // Draw the skybox
+    glBindTexture(GL_TEXTURE_2D, skyTextureID);
+    glBegin(GL_QUADS);
+
+    // Calculate texture coordinates based on player angle
+    float texXLeft = (playerAngle - fov / 2.0f) / 360.0f; // Map angle to texture coordinate (0 to 1)
+    float texXRight = (playerAngle + fov / 2.0f) / 360.0f;
+
+    glTexCoord2f(texXLeft, 1.0f); glVertex2f(0, 0); // Top-left
+    glTexCoord2f(texXRight, 1.0f); glVertex2f(screenWidth, 0); // Top-right
+    glTexCoord2f(texXRight, 0.0f); glVertex2f(screenWidth, horizon); // Bottom-right
+    glTexCoord2f(texXLeft, 0.0f); glVertex2f(0, horizon); // Bottom-left
+
+    glEnd();
+
+    // Draw the ground
+    glBindTexture(GL_TEXTURE_2D, groundTextureID);
+    glBegin(GL_QUADS);
+    for (int x = 0; x < screenWidth; x++) {
+        float rayAngle = playerAngle - angleOffset + angleStep * x;
+        float rayX = cosf(rayAngle * M_PI / 180.0f);
+        float rayY = sinf(rayAngle * M_PI / 180.0f);
+
+        // Calculate ground texture coordinates based on distance
+        float distance = 0.1f; // Start close to the player
+        float maxDistance = 16.0f;
+        float horizon = screenHeight / 2.0f + playerVerticalAngle * 5.0f;
+        float bottom = screenHeight;
+
+        for (int y = (int)horizon; y < bottom; y++) {
+            float perspective = (float)(y - horizon) / (bottom - horizon);
+            distance = 0.1f + perspective * maxDistance;
+            float groundX = playerX + rayX * distance;
+            float groundY = playerY + rayY * distance;
+
+            // Texture coordinates based on ground position
+            float texX = groundX - floorf(groundX);
+            float texY = groundY - floorf(groundY);
+
+            glTexCoord2f(texX, texY);
+            glVertex2f(x, y);
+            glTexCoord2f(texX, texY);
+            glVertex2f(x + 1, y);
+            glTexCoord2f(texX, texY);
+            glVertex2f(x + 1, y + 1);
+            glTexCoord2f(texX, texY);
+            glVertex2f(x, y + 1);
+        }
+    }
+    glEnd();
+
+    // Draw the walls
     glBindTexture(GL_TEXTURE_2D, textureID);
     glBegin(GL_QUADS);
 
